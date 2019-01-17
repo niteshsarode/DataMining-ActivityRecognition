@@ -1,8 +1,8 @@
 format shortg;
 folders_myo = dir("MyoData/");
 folders_gT = dir("groundTruth/");
-mat = zeros(9);
 e_mat = {};
+ne_mat = {};
 for j=1:length(folders_myo)
     disp(folders_myo(j).name)
      if contains(folders_myo(j).name,"user")
@@ -22,13 +22,20 @@ for j=1:length(folders_myo)
                   first_sample = f_data(1,1);
                   s_t = cell2mat(start_time);
                   e_t = cell2mat(end_time);
+                  cursor = 1;
                   for l=1:length(tf_data)
                       s = first_sample + s_t(l);
                       e = first_sample + e_t(l);
-                      for t=1:length(f_data)
-                          if f_data(t,1) > s && f_data(t,1) < e
-                              disp(f_data(t,:));
-                              e_mat = [e_mat;f_data(t,:)];                              
+                      for t=cursor:length(f_data)
+                          if f_data(t,1) >= s && f_data(t,1) <= e
+                              e_mat = [e_mat;f_data(t,:)];   
+                              cursor = t;
+                          end
+                          if f_data(t,1) < s
+                              ne_mat = [ne_mat;f_data(t,:)];
+                          end
+                          if f_data(t,1) > e
+                              break
                           end
                       end
                   end
@@ -36,4 +43,3 @@ for j=1:length(folders_myo)
          end
      end
 end
-disp(e_mat)
