@@ -7,7 +7,7 @@ for j=3:4
          files = dir("MyoData/"+folders_myo(j).name+"/fork/*.*");
          files_gt = dir("groundTruth/user9/fork/*.txt");
          for k=1:length(files)
-             if contains(files(k).name,"EMG") || contains(files(k).name,"IMU")
+             if contains(files(k).name,"EMG")  % || contains(files(k).name,"IMU")
                   calc(files(k).name,files_gt(1).name)
               end
          end
@@ -36,6 +36,12 @@ function calc(file_myo,file_gt)
       end
       cursor = floor(e_t(l));
     end
-    disp(e_mat)
+    calcFFT(e_mat(:,2:9))
 end                  
 
+function calcFFT(mat)
+    disp(length(mat))
+    X = fftshift(fft(mat));
+    pxx = pwelch(X);
+    plot(pxx)
+end
