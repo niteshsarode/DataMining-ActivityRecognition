@@ -88,16 +88,20 @@ end
 function calcFFT(mat)
     flag = mat(1, end);
     temp_arr = [];
+%     final_mat = [];
     sep_e_mat = [];
     sep_non_e_mat = [];
     for l = 1:length(mat(:,1))
         if(mat(l, end) ~= flag)
+            %function used
+%             temp_arr = fftshift(fft(temp_arr));
             if(flag == 0)
                 sep_e_mat = [sep_e_mat; temp_arr]; 
             else
                 sep_non_e_mat = [sep_non_e_mat; temp_arr]; 
             end
             flag = mat(l, end);
+%             final_mat = [final_mat; temp_arr];
             temp_arr = [];
         else
             temp_arr = [temp_arr ; mat(l, :)];
@@ -105,19 +109,27 @@ function calcFFT(mat)
     end
     
     
-    disp(size(sep_e_mat));
-    disp(size(sep_non_e_mat));
+%     subplot(2,2,1);
+    disp(leng)
     x = sep_e_mat(:,1);
     x = real(fftshift(fft(x)));
-    plot(x, 'color', [0 0 1]);
+    plot(x);
     title('eating action');
+%     figure();
     hold on
 
+%     subplot(2,2,2);
     y = sep_non_e_mat(:,1);
     y = real(fftshift(fft(y)));
     plot(y, 'Color',[1 0 0]);
     title('non-eating action');
 
+%     plot([x(end) x], [y(end) y], 'r-');
+%     end
+%     disp(length(final_mat(:, 1)));
+%     pxx = pwelch(final_mat);
+%     plot(pxx)
+%     xticks(0:1:256);
 end
 
 function f_sum(mat)
