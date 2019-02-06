@@ -40,16 +40,17 @@ function calc(file_myo,file_gt,sensor)
     end
     
     [sep_e_mat, sep_non_e_mat] = separate_classes(res_mat(:,2:10));
-    
-    calc_fft(sep_e_mat, sep_non_e_mat, sensor);
-    calc_dct(sep_e_mat, sep_non_e_mat, sensor);
-    calc_rms(sep_e_mat, sep_non_e_mat, sensor);
-    calc_std(res_mat(:,2:10), sensor);
-    calc_mean(res_mat(:,2:10), sensor);
+%     
+%     calc_fft(sep_e_mat, sep_non_e_mat, sensor);
+%     calc_dct(sep_e_mat, sep_non_e_mat, sensor);
+%     calc_rms(sep_e_mat, sep_non_e_mat, sensor);
+%     calc_std(res_mat(:,2:10), sensor);
+%     calc_mean(res_mat(:,2:10), sensor);
     
     [e_mat_ext, non_e_mat_ext] = separate_extracted_features(sep_e_mat, sep_non_e_mat, sensor);
-    
-    calc_pca(e_mat_ext,sensor);    
+    calc_pca(e_mat_ext,sensor);  
+%     after_pca(sep_e_mat)
+
 end
 
 function [sep_e_mat, sep_non_e_mat] = separate_classes(mat)
@@ -303,6 +304,7 @@ function calc_pca(mat, sensor)
         numberOfPCAComponents = 4;
     end
     [coeff,score] = pca(mat);
+    [vec,values] = eig(coeff);
     pcaFeatureMatrix = mat * coeff;
     [rows,col] = size(pcaFeatureMatrix);
     for n=1:rows
@@ -317,15 +319,21 @@ function calc_pca(mat, sensor)
         title(sensor+"-PCA");
         saveas(fx, strcat('imu_pca.png'));
     end
+
+    plot(pcaFeatureMatrix);
+    hold on;
     
     xlabel('PCA Components');
     ylabel('Values for the PCA Components');
-    
-    fy = figure();
-    if sensor == "EMG"
-        biplot(coeff(:,1:3),'scores',score(:,1:3),'varlabels',emg_AxisNames);
+   
+    if sensor == "IMU"
+        biplot(coeff(:,1:3),'scores',score(:,1:3),'varlabels',imu_AxisNames);
         title("3d-PCA");
-        saveas(fy, strcat('3d_pca.png'));
+        f = figure();
     end
 end
 
+function before_pca(mat)
+   [coeff,score,l,t,e] = pca(mat);
+   disp("Vaues " + e)
+end
