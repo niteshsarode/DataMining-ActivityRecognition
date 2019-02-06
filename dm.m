@@ -8,7 +8,7 @@ for j=3:3
          files = dir("MyoData/"+folders_myo(j).name+"/fork/*.*");
          files_gt = dir("groundTruth/user9/fork/*.txt");
          for k=1:length(files)
-             if contains(files(k).name,"EMG")
+             if contains(files(k).name,"IMU")
                   calc(files(k).name,files_gt(1).name)
               end
          end
@@ -49,21 +49,25 @@ function calc(file_myo,file_gt)
 %     findchangepts(e_mat(:,2:9));
     
     %fft function call
-    calcFFT(e_mat(:,2:9))
+%     disp(e_mat(1:2, 2:end));
+    calcFFT(e_mat(:,2:end));
+
+%     f_std(e_mat(:,2:end));
     
     %Mean function for the matrix
+    
 %     disp(e_mat(1:5,2:9));
 %     t_mat = wdenoise(e_mat(:, 2:9));
 %     e_mat = [t_mat e_mat(:,end:end)];
 %     disp(e_mat(1:5, :))
 
-%     f_mean(e_mat(:, 2:9));
+%     f_mean(e_mat(:, 2:end));
     
     %sum function for the matrix
 %     f_sum(e_mat(:, 2:9));
     
     %RMS along the column of the matrix
-%     f_rms(e_mat(:, 2:9));
+%     f_rms(e_mat(:, 2:end));
 end            
 
 
@@ -86,16 +90,58 @@ function findchangepts(mat)
 end
 
 function calcFFT(mat)
+    sep_e_mat = [];
+    sep_non_e_mat = [];
+    
+    for p = 1:length(mat(:,1))
+        if(mat(p, end) == 1)
+            sep_e_mat = [sep_e_mat; mat(p,1:end-1)];
+        else
+            sep_non_e_mat = [sep_non_e_mat; mat(p,1:end-1)];
+        end
+    end
+    
+    imu_names = {'Orientation X'; 'Orientation Y'; 'Orientation Z'; 'Orientation W'; 'Accelerometer X'; 'Accelerometer Y'; 'Accelerometer Z'; 'Gyroscope X'; 'Gyroscope Y'; 'Gyroscope Z'};
+    emg_names = {'EMG1'; 'EMG2'; 'EMG3'; 'EMG4'; 'EMG5'; 'EMG6'; 'EMG7'; 'EMG8'};
+    
+    for k = 1:10
+        x = sep_e_mat(:,k);
+        x = real(dct(x));
+        %red color for eating action
+        f = figure();
+        plot(x(20:end,:), 'color', [0 0 1]);
+        hold on
+
+        y = sep_non_e_mat(:,k);
+        y = real(dct(y));
+        %blue color for non-eating action
+        plot(y(20:end,:), 'color', [1 0 0]);
+        legend({'eating', 'non-eating'}, 'Location','northeast');
+        xlabel('Frequency');
+        ylabel('DCT values');
+        xlim([20 250]);
+        title(imu_names(k));
+        
+        saveas(f, strcat('emg_',k,'.png'));
+        
+    end
+
+end
+
+function f_std(mat)
     flag = mat(1, end);
     temp_arr = [];
     sep_e_mat = [];
     sep_non_e_mat = [];
+    
     for l = 1:length(mat(:,1))
         if(mat(l, end) ~= flag)
-            if(flag == 0)
-                sep_e_mat = [sep_e_mat; temp_arr]; 
+            %function used
+            temp_arr = std(temp_arr, 1);
+            if(flag == 1)
+                sep_e_mat = [sep_e_mat; temp_arr];
             else
-                sep_non_e_mat = [sep_non_e_mat; temp_arr]; 
+                sep_non_e_mat = [sep_non_e_mat; temp_arr];
             end
             flag = mat(l, end);
             temp_arr = [];
@@ -104,80 +150,111 @@ function calcFFT(mat)
         end
     end
     
-    
-    disp(size(sep_e_mat));
-    disp(size(sep_non_e_mat));
-    x = sep_e_mat(:,1);
-    x = real(fftshift(fft(x)));
-    plot(x, 'color', [0 0 1]);
-    title('eating action');
-    hold on
+    imu_names = {'Orientation X'; 'Orientation Y'; 'Orientation Z'; 'Orientation W'; 'Accelerometer X'; 'Accelerometer Y'; 'Accelerometer Z'; 'Gyroscope X'; 'Gyroscope Y'; 'Gyroscope Z'};
+    emg_names = {'EMG1'; 'EMG2'; 'EMG3'; 'EMG4'; 'EMG5'; 'EMG6'; 'EMG7'; 'EMG8'};
 
-    y = sep_non_e_mat(:,1);
-    y = real(fftshift(fft(y)));
-    plot(y, 'Color',[1 0 0]);
-    title('non-eating action');
-
-end
-
-function f_sum(mat)
-    flag = mat(1, end);
-    temp_arr = [];
-    final_mat = [];
-    for l = 1:length(mat(:,1))
-        if(mat(l, end) ~= flag)
-            %function used
-            temp_arr = sum(temp_arr, 1);
-            flag = mat(l, end);
-            final_mat = [final_mat; temp_arr];
-            temp_arr = [];
-        else
-            temp_arr = [temp_arr ; mat(l, :)];
-        end
+    for k = 1:10
+        x = sep_e_mat(:,k);
+        y = sep_non_e_mat(:,k);
+        f = figure();
+        plot(x, 'color', [1 0 0]);
+        
+        hold on
+        plot(y, 'color', [0 0 1]);
+        title(imu_names(k));
+        xlabel('Activities') ;
+        ylabel('STD values');
+        legend({'eating', 'non-eating'}, 'Location','northeast');
+        saveas(f, strcat('imu_',k,'.png'));
     end
-    disp(length(final_mat(:, 1)));
-    plot(final_mat(1:50, :));
-    xticks(0:1:816);
 end
+
+% function f_sum(mat)
+%     flag = mat(1, end);
+%     temp_arr = [];
+%     final_mat = [];
+%     for l = 1:length(mat(:,1))
+%         if(mat(l, end) ~= flag)
+%             %function used
+%             temp_arr = sum(temp_arr, 1);
+%             flag = mat(l, end);
+%             final_mat = [final_mat; temp_arr];
+%             temp_arr = [];
+%         else
+%             temp_arr = [temp_arr ; mat(l, :)];
+%         end
+%     end
+%     disp(length(final_mat(:, 1)));
+%     plot(final_mat(1:50, :));
+%     xticks(0:1:816);
+% end
+
 
 function f_mean(mat)
     flag = mat(1, end);
     temp_arr = [];
-    final_mat = [];
+    sep_e_mat = [];
+    sep_non_e_mat = [];
+    
     for l = 1:length(mat(:,1))
         if(mat(l, end) ~= flag)
             %function used
-%             temp_arr = wdenoise(temp_arr);
             temp_arr = mean(temp_arr, 1);
+            if(flag == 1)
+                sep_e_mat = [sep_e_mat; temp_arr];
+            else
+                sep_non_e_mat = [sep_non_e_mat; temp_arr];
+            end
             flag = mat(l, end);
-            final_mat = [final_mat; temp_arr];
             temp_arr = [];
         else
             temp_arr = [temp_arr ; mat(l, :)];
         end
     end
-    disp(length(final_mat(:, 1)));
-    plot(final_mat(1:50, 2:2));
-    legend('EMG2');
-    xticks(0:1:816);
+    
+    imu_names = {'Orientation X'; 'Orientation Y'; 'Orientation Z'; 'Orientation W'; 'Accelerometer X'; 'Accelerometer Y'; 'Accelerometer Z'; 'Gyroscope X'; 'Gyroscope Y'; 'Gyroscope Z'};
+    emg_names = {'EMG1'; 'EMG2'; 'EMG3'; 'EMG4'; 'EMG5'; 'EMG6'; 'EMG7'; 'EMG8'};
+    
+    for k = 1:10
+        x = sep_e_mat(:,k);
+        y = sep_non_e_mat(:,k);
+        f = figure();
+        plot(x, 'color', [1 0 0]);
+        hold on
+        plot(y, 'color', [0 0 1]);
+        title(imu_names(k));
+        xlabel('activities');
+        ylabel('mean values');
+        legend({'eating', 'non-eating'}, 'Location','northeast');
+        saveas(f, strcat('imu_',k,'.png'));
+    end
 end
 
 function f_rms(mat)
     flag = mat(1, end);
+    sep_e_mat = [];
+    sep_non_e_mat = [];
     temp_arr = [];
-    final_mat = [];
+    
     for l = 1:length(mat(:,1))
-        if(mat(l, end) ~= flag)
-            %function used
-            temp_arr = rms(temp_arr, 1);
-            flag = mat(l, end);
-            final_mat = [final_mat; temp_arr];
-            temp_arr = [];
+        if(mat(l, end) == 1)
+            sep_e_mat = [sep_e_mat; mat(l,1:end-1)];
         else
-            temp_arr = [temp_arr ; mat(l, :)];
+            sep_non_e_mat = [sep_non_e_mat; mat(l,1:end-1)];
         end
     end
-    disp(length(final_mat(:, 1)));
-    plot(final_mat(1:75, :));
-    xticks(0:1:816);
+    f = figure();
+    x = rms(sep_e_mat());
+    y = rms(sep_non_e_mat());
+    plot(x, 'color', [1 0 0]);
+    title('rms');
+    
+    hold on
+    
+    plot(y, 'color', [0 1 0]);
+    xlabel('activities');
+    ylabel('RMS values');
+    legend({'eating', 'non-eating'}, 'Location','northeast');
+    saveas(f, 'emg.png');
+    
 end
