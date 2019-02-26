@@ -303,6 +303,7 @@ function calc_pca(mat, sensor)
     elseif sensor == "EMG"
         numberOfPCAComponents = 4;
     end
+    
     [coeff,score] = pca(mat);
     [vec,values] = eig(coeff);
     pcaFeatureMatrix = mat * coeff;
